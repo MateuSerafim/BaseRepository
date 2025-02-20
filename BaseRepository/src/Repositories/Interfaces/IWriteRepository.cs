@@ -1,9 +1,10 @@
-using BaseRepository.EntityBase;
+using BaseRepository.Entities.Base;
 using BaseUtils.FlowControl.ResultType;
 
-namespace BaseRepository.RepositoryBase;
+namespace BaseRepository.Repositories;
 
-public interface IWriteRepository<E, EId> where E : class, IEntity<EId>
+public interface IWriteRepository<E, EId> : IReadRepository<E, EId>
+where E : class, IEntity<EId>
 where EId: struct
 {
     Task<Result<E>> AddAsync(E entity, CancellationToken token = default);

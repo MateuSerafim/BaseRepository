@@ -1,4 +1,4 @@
-namespace BaseRepository.EntityBase;
+namespace BaseRepository.Entities.Base;
 public enum EntityStatus
 {
     Activated,

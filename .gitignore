@@ -1,0 +1,52 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.log
+*.csproj.user
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+
+# Pacotes e dependências
+packages/
+node_modules/
+*.nupkg
+*.snupkg
+project.lock.json
+
+# Configurações locais e temporários
+*.db
+*.bak
+*.swp
+*.swo
+*.tmp
+*.log
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+*.code-workspace
+
+# Docker e CI/CD
+docker-compose.override.yml
+.env
+*.env.local
+
+# Testes e cobertura
+TestResults/
+coverage/
+*.coverage
+*.testlog

@@ -1,6 +1,6 @@
-using BaseRepository.EntityBase;
+using BaseRepository.Entities.Base;
 
-namespace BaseRepository.RepositoryBase.Extensions;
+namespace BaseRepository.Repositories.Extensions;
 
 public static class IReadRepositoryExtensions
 {

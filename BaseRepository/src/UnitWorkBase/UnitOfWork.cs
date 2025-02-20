@@ -1,32 +1,36 @@
-using BaseRepository.ContextBase;
-using BaseRepository.EntityBase;
-using BaseRepository.RepositoryBase;
-using BaseRepository.src.RepositoryBase;
+using BaseRepository.Entities.Base;
+using BaseRepository.Repositories;
+using BaseRepository.Repositories.Base;
+using BaseRepository.src.Entities.Base.Actions;
 using BaseUtils.FlowControl.ErrorType;
 using BaseUtils.FlowControl.ResultType;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseRepository.UnitWorkBase;
-public class UnitOfWork(BaseDbContext context) : IUnitOfWork, IDisposable
+public class UnitOfWork(DbContext context) : IUnitOfWork, IDisposable
 {
-
-    private readonly BaseDbContext _context = context;
+    private readonly DbContext _context = context;
     private bool InvalidState = false;
     private bool Disposed = false;
+    private string InvalidStateMessage = "Request Database State has invalid.";
 
+    public IReadRepository<E, EId> ReadOnlyRepository<E, EId>()
+    where E : class, IEntity<EId>
+    where EId: struct
+    => new ReadOnlyRepository<E, EId>(_context);
 
-    public virtual IGenericRepository Repository<E>(bool repositoryReadOnly = false)
-    where E : class, IEntity<Guid>
-    {
-        return repositoryReadOnly ? new ReadOnlyRepository<E>(_context) : new Repository<E>(_context);
-    }
+    public IWriteRepository<E, EId> WriteRepository<E, EId>()
+    where E : class, IEntity<EId>
+    where EId: struct
+    => new Repository<E, EId>(_context);
 
-    public Result<int> Commit()
+    public Result<(int, List<IAction>)> Commit()
     {
         if (InvalidState) 
             return ErrorResponse.CriticalError();
         try
         {
-            return _context.SaveChanges();
+            return (_context.SaveChanges(), GetEntitiesActions());
         }
         catch (Exception ex)
         {
@@ -34,18 +38,31 @@ public class UnitOfWork(BaseDbContext context) : IUnitOfWork, IDisposable
         }
     }
 
-    public async Task<Result<int>> CommitAsync(CancellationToken token = default)
+    public async Task<Result<(int, List<IAction>)>> CommitAsync(CancellationToken token = default)
     {
         if (InvalidState) 
-            return ErrorResponse.CriticalError();
+            return ErrorResponse.CriticalError(InvalidStateMessage);
         try
         {
-            return await _context.SaveChangesAsync(token);
+            var trackedActions = GetEntitiesActions();
+            var result = await _context.SaveChangesAsync(token);
+            return (result, trackedActions);
         }
         catch (Exception ex)
         {
             return ErrorResponse.CriticalError(ex.Message);
         }
+    }
+
+    private List<IAction> GetEntitiesActions()
+    => [.. _context.ChangeTracker.Entries<IEntity>().SelectMany(s => s.Entity.Actions)];
+
+    public void InvalidateState(string invalidStateMessage)
+    {
+        if (!string.IsNullOrEmpty(invalidStateMessage))
+            InvalidStateMessage = invalidStateMessage;
+
+        InvalidateState();
     }
 
     public void InvalidateState() => InvalidState = true;
@@ -64,4 +81,5 @@ public class UnitOfWork(BaseDbContext context) : IUnitOfWork, IDisposable
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+    
 }

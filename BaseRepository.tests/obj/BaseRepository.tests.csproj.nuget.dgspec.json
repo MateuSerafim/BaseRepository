@@ -22,6 +22,7 @@
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {},
+          "https://api.nuget.org/v3/index.json": {},
           "https://nuget.pkg.github.com/MateuSerafim/index.json": {}
         },
         "frameworks": {
@@ -50,13 +51,23 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "AutoFixture": {
+              "target": "Package",
+              "version": "[4.18.1, )"
+            },
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            },
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
               "version": "[17.11.1, )"
             },
             "coverlet.collector": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
               "target": "Package",
-              "version": "[6.0.2, )"
+              "version": "[6.0.4, )"
             },
             "xunit": {
               "target": "Package",
@@ -105,6 +116,7 @@
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {},
+          "https://api.nuget.org/v3/index.json": {},
           "https://nuget.pkg.github.com/MateuSerafim/index.json": {}
         },
         "frameworks": {
@@ -131,7 +143,11 @@
           "dependencies": {
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[9.0.2, )"
+            },
+            "Microsoft.EntityFrameworkCore.Relational": {
+              "target": "Package",
+              "version": "[9.0.2, )"
             },
             "Rodovia.BaseUtils": {
               "target": "Package",

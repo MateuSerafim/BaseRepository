@@ -22,6 +22,7 @@
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {},
+          "https://api.nuget.org/v3/index.json": {},
           "https://nuget.pkg.github.com/MateuSerafim/index.json": {}
         },
         "frameworks": {
@@ -48,7 +49,11 @@
           "dependencies": {
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[9.0.2, )"
+            },
+            "Microsoft.EntityFrameworkCore.Relational": {
+              "target": "Package",
+              "version": "[9.0.2, )"
             },
             "Rodovia.BaseUtils": {
               "target": "Package",

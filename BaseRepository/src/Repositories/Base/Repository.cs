@@ -1,38 +1,29 @@
 using System.Linq.Expressions;
-using BaseRepository.ContextBase;
-using BaseRepository.EntityBase;
-using BaseRepository.RepositoryBase;
-using BaseRepository.RepositoryBase.Extensions;
+using BaseRepository.Entities.Base;
+using BaseRepository.Repositories.Extensions;
 using BaseUtils.FlowControl.ErrorType;
 using BaseUtils.FlowControl.ResultType;
 using Microsoft.EntityFrameworkCore;
 
-namespace BaseRepository.src.RepositoryBase;
+namespace BaseRepository.Repositories.Base;
 
-public class Repository<E>(BaseDbContext context) : IReadRepository<E, Guid>, 
-                                                   IWriteRepository<E, Guid>
-where E: class, IEntity<Guid> 
+public class Repository<E, EId>(DbContext context) : 
+RepositoryBase<E, EId>(context), IWriteRepository<E, EId>
+where E: class, IEntity<EId>
+where EId: struct 
 {
-    private readonly DbSet<E> _dbSet = context.Set<E>();
-
-    public const string NotFoundErrorMessage = 
-    $"Entity with Id {ErrorResponse.ReferenceToVariable} not found.";
-
-    public const string PrimaryKeyViolationErrorMessage = 
-    $"Operation Error: Entity {ErrorResponse.ReferenceToVariable} cannot be added because Id away exists!";
-
     public async Task<Result<E>> AddAsync(E entity, CancellationToken token = default)
     {
         if (await ExistAsync(entity.Id, token)) 
             return ErrorResponse.InvalidOperationError(PrimaryKeyViolationErrorMessage, 
-                                                       entity.GetEntityDescription());
+                    entity.GetEntityDescription());
         
         await _dbSet.AddAsync(entity, token);
 
-        return Result<E>.Success(entity);
+        return entity;
     }
-
-    public async Task<Result<E>> ActivateAsync(Guid entityId, CancellationToken token = default)
+    
+    public async Task<Result<E>> ActivateAsync(EId entityId, CancellationToken token = default)
     {
         var entityResult = await GetByIdAsync(entityId, token);
         if (entityResult.IsFailure) 
@@ -43,13 +34,13 @@ where E: class, IEntity<Guid>
 
     public async Task<Result<E>> ActivateAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E>, E, Guid>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Activated);
     }
 
-    public async Task<Result<E>> DeactivateAsync(Guid entityId, CancellationToken token = default)
+    public async Task<Result<E>> DeactivateAsync(EId entityId, CancellationToken token = default)
     {
         var entityResult = await GetByIdAsync(entityId, token);
         if (entityResult.IsFailure) 
@@ -60,13 +51,13 @@ where E: class, IEntity<Guid>
 
     public async Task<Result<E>> DeactivateAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E>, E, Guid>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Deactivated);
     }
 
-    public async Task<Result<E>> RemoveAsync(Guid entityId, CancellationToken token = default)
+    public async Task<Result<E>> RemoveAsync(EId entityId, CancellationToken token = default)
     {
         var entityResult = await GetByIdAsync(entityId, token);
         if (entityResult.IsFailure) 
@@ -77,7 +68,7 @@ where E: class, IEntity<Guid>
 
     public async Task<Result<E>> RemoveAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E>, E, Guid>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Removed);
@@ -90,7 +81,7 @@ where E: class, IEntity<Guid>
             EntityStatus.Activated => entity.Activate(),
             EntityStatus.Deactivated => entity.Deactivate(),
             EntityStatus.Removed => entity.Remove(),
-            _ => ErrorResponse.InvalidOperationError()
+            _ => ErrorResponse.InvalidOperationError(InvalidEntityState, newEntityStatus)
         };
 
         if (changeStatusResult.IsFailure)
@@ -103,7 +94,7 @@ where E: class, IEntity<Guid>
 
     public async Task<Result<E>> UpdateAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E>, E, Guid>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         _dbSet.Update(entity);
@@ -113,7 +104,7 @@ where E: class, IEntity<Guid>
 
     public async Task<Result> DeleteEntityAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E>, E, Guid>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         _dbSet.Remove(entity);
@@ -121,7 +112,7 @@ where E: class, IEntity<Guid>
         return Result.Success();
     }
 
-    public async Task<Result> DeleteEntityAsync(Guid entityId, CancellationToken token = default)
+    public async Task<Result> DeleteEntityAsync(EId entityId, CancellationToken token = default)
     {
         var entityResult = await GetByIdAsync(entityId, token);
         if (entityResult.IsFailure) 
@@ -132,20 +123,19 @@ where E: class, IEntity<Guid>
         return Result.Success();
     }
 
-    public async Task<bool> ExistAsync(Guid entityId, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistAsync(EId entityId, CancellationToken cancellationToken = default)
     => await ExistAsync(entityId, EntityStatus.Activated, cancellationToken);
+    public async Task<bool> ExistAsync(EId entityId, EntityStatus entityStatus, 
+                                        CancellationToken cancellationToken = default)
+    => await _dbSet.AnyAsync(e => Equals(e.Id, entityId) && e.EntityStatus <= entityStatus, 
+                             cancellationToken);
 
-    public async Task<bool> ExistAsync(Guid entityId, EntityStatus entityStatus, 
-                                       CancellationToken cancellationToken = default)
-    => await _dbSet.AnyAsync(e => e.Id == entityId && e.EntityStatus <= entityStatus, 
-                                 cancellationToken);
-
-    public async Task<Result<E>> GetByIdAsync(Guid entityId, CancellationToken token = default) 
+    public async Task<Result<E>> GetByIdAsync(EId entityId, CancellationToken token = default) 
     => await GetByIdAsync(entityId, EntityStatus.Activated, token);
-    public async Task<Result<E>> GetByIdAsync(Guid entityId, EntityStatus entityStatus, 
+    public async Task<Result<E>> GetByIdAsync(EId entityId, EntityStatus entityStatus, 
     CancellationToken cancellationToken = default)
     {
-        var valueMaybe = await Query(e => e.Id == entityId, entityStatus)
+        var valueMaybe = await Query(e => Equals(e.Id, entityId), entityStatus)
                               .FirstOrDefaultAsync(cancellationToken);
 
         return valueMaybe is null 
