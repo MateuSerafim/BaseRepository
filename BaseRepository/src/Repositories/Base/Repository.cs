@@ -25,7 +25,7 @@ where EId: struct
     
     public async Task<Result<E>> ActivateAsync(EId entityId, CancellationToken token = default)
     {
-        var entityResult = await GetByIdAsync(entityId, token);
+        var entityResult = await GetByIdAsync(entityId, EntityStatus.Removed, token);
         if (entityResult.IsFailure) 
             return entityResult;
 
@@ -34,7 +34,7 @@ where EId: struct
 
     public async Task<Result<E>> ActivateAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, EntityStatus.Removed, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Activated);
@@ -42,7 +42,7 @@ where EId: struct
 
     public async Task<Result<E>> DeactivateAsync(EId entityId, CancellationToken token = default)
     {
-        var entityResult = await GetByIdAsync(entityId, token);
+        var entityResult = await GetByIdAsync(entityId, EntityStatus.Removed, token);
         if (entityResult.IsFailure) 
             return entityResult;
 
@@ -51,7 +51,7 @@ where EId: struct
 
     public async Task<Result<E>> DeactivateAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, EntityStatus.Removed, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Deactivated);
@@ -59,7 +59,7 @@ where EId: struct
 
     public async Task<Result<E>> RemoveAsync(EId entityId, CancellationToken token = default)
     {
-        var entityResult = await GetByIdAsync(entityId, token);
+        var entityResult = await GetByIdAsync(entityId, EntityStatus.Removed, token);
         if (entityResult.IsFailure) 
             return entityResult;
 
@@ -68,13 +68,13 @@ where EId: struct
 
     public async Task<Result<E>> RemoveAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, EntityStatus.Removed, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         return ModifyEntityState(entity, EntityStatus.Removed);
     }
 
-    private Result<E> ModifyEntityState(E entity, EntityStatus newEntityStatus)
+    protected Result<E> ModifyEntityState(E entity, EntityStatus newEntityStatus)
     {
         var changeStatusResult = newEntityStatus switch
         {
@@ -104,7 +104,7 @@ where EId: struct
 
     public async Task<Result> DeleteEntityAsync(E entity, CancellationToken token = default)
     {
-        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, token))
+        if (await this.NotExist<Repository<E, EId>, E, EId>(entity.Id, EntityStatus.Removed, token))
             return ErrorResponse.NotFoundError(NotFoundErrorMessage, entity.Id);
 
         _dbSet.Remove(entity);
@@ -114,7 +114,7 @@ where EId: struct
 
     public async Task<Result> DeleteEntityAsync(EId entityId, CancellationToken token = default)
     {
-        var entityResult = await GetByIdAsync(entityId, token);
+        var entityResult = await GetByIdAsync(entityId, EntityStatus.Removed, token);
         if (entityResult.IsFailure) 
             return entityResult.Errors;
 

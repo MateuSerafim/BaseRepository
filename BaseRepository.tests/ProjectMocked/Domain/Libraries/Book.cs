@@ -1,4 +1,6 @@
 using BaseRepository.Entities.Base;
+using BaseUtils.FlowControl.ErrorType;
+using BaseUtils.FlowControl.ResultType;
 
 namespace BaseRepository.tests.Domain.Libraries;
 public class Book : Entity<int>
@@ -26,4 +28,9 @@ public class Book : Entity<int>
 
     public static Book Create(string name, string author, int yearOfPublication, int id)
     => new (name, author, yearOfPublication, EntityStatus.Activated, id);
+
+    public override Result Deactivate()
+    {
+        return ErrorResponse.InvalidOperationError();
+    }
 }

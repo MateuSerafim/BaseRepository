@@ -29,4 +29,9 @@ public class User : Entity<Guid>
     {
         return new User(name, email, EntityStatus.Activated, Guid.CreateVersion7());
     }
+
+    public void SetName(string name) 
+    {
+        Name = name;
+    }
 }

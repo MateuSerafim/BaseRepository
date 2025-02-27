@@ -1,4 +1,6 @@
 using AutoFixture;
+using BaseRepository.Entities.Base;
+using BaseRepository.ProjectMocked.Repositories;
 using BaseRepository.Repositories.Base;
 using BaseRepository.tests.Domain.Libraries;
 using BaseRepository.tests.Domain.Users;
@@ -7,7 +9,6 @@ using BaseUtils.FlowControl.ErrorType;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaseRepository.tests.Repositories;
-
 public class WriteRepositoryTests
 {
     [Fact(DisplayName = "WRT-1.01.01: ExistAsync, has entity - Guid")]
@@ -689,5 +690,529 @@ public class WriteRepositoryTests
             .Replace(ErrorResponse.ReferenceToVariable, 
                      mockedLink.GetEntityDescription()), 
             result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-6.01.01: ActivateAsync - Id - success")]
+    public async Task ActivateIdAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.ActivateAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Activated, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-6.01.02: ActivateAsync -Id - failure not exist")]
+    public async Task ActivateIdAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+
+        // When        
+        var result = await userRepository.ActivateAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-6.02.01: ActivateAsync - Entity - success")]
+    public async Task ActivateEntityAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.ActivateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Activated, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-6.02.02: ActivateAsync - Entity - failure not exist")]
+    public async Task ActivateEntityAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+
+        // When        
+        var result = await userRepository.ActivateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-7.01.01: DeactivateAsync - Id - success")]
+    public async Task DeactivateIdAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.DeactivateAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Deactivated, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-7.01.02: DeactivateAsync - Id - failure not exist")]
+    public async Task DeactivateIdAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When        
+        var result = await userRepository.DeactivateAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-7.02.01: DeactivateAsync - Entity - success")]
+    public async Task DeactivateEntityAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.DeactivateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Deactivated, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-7.02.02: DeactivateAsync - Entity - failure not exist")]
+    public async Task DeactivateEntityAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When        
+        var result = await userRepository.DeactivateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-8.01.01: RemoveAsync - Id - success")]
+    public async Task RemoveIdAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.RemoveAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Removed, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-8.01.02: RemoveAsync - Id - failure not exist")]
+    public async Task RemoveIdAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When        
+        var result = await userRepository.RemoveAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-8.02.01: RemoveAsync - Entity - success")]
+    public async Task RemoveEntityAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.RemoveAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.Equal(EntityStatus.Removed, result.GetValue().EntityStatus);
+    }
+
+    [Fact(DisplayName = "WRT-8.02.02: RemoveAsync - Entity - failure not exist")]
+    public async Task RemoveEntityAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When        
+        var result = await userRepository.RemoveAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-9.01: UpdateAsync - Success")]
+    public async Task UpdateAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When
+        var newName = fixture.Create<string>();
+        mockedUser.SetName(newName);
+
+        var result = await userRepository.UpdateAsync(mockedUser);
+
+        await unitOfWork.CommitAsync();
+
+        var userResult = await userRepository.GetByIdAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.True(userResult.IsSuccess);
+        Assert.Equal(newName, userResult.GetValue().Name);
+    }
+
+    [Fact(DisplayName = "WRT-9.02: UpdateAsync - Entity not exist")]
+    public async Task UpdateAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When
+        var newName = fixture.Create<string>();
+        mockedUser.SetName(newName);
+
+        var result = await userRepository.UpdateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-10.01.01: DeleteAsync - Id - success")]
+    public async Task DeleteIdAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.DeleteEntityAsync(mockedUser.Id);
+        await unitOfWork.CommitAsync();
+
+        var getResult = await userRepository.GetByIdAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.True(getResult.IsFailure);
+    }
+
+    [Fact(DisplayName = "WRT-10.01.02: DeleteAsync -Id - failure not exist")]
+    public async Task DeleteIdAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+
+        // When        
+        var result = await userRepository.DeleteEntityAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-10.02.01: DeleteAsync - Entity - success")]
+    public async Task DeleteEntityAsyncMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        await userRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await userRepository.DeleteEntityAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        var getResult = await userRepository.GetByIdAsync(mockedUser.Id);
+
+        // Then
+        Assert.True(result.IsSuccess);
+        Assert.True(getResult.IsFailure);
+    }
+
+    [Fact(DisplayName = "WRT-10.02.02: ActivateAsync - Entity - failure not exist")]
+    public async Task DeleteEntityAsyncMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var userRepository = unitOfWork.WriteRepository<User, Guid>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = User.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>()).GetValue();
+        mockedUser.Deactivate();
+
+        // When        
+        var result = await userRepository.DeleteEntityAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<User, Guid>
+            .NotFoundErrorMessage
+            .Replace(ErrorResponse.ReferenceToVariable, 
+                     mockedUser.Id.ToString()), 
+            result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-11.01: ModifyEntityState - Failure, invalid entity action")]
+    public async Task ModifyEntityStateMethodTest1()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var unitOfWork = mockedProgram.GetUnitOfWork();
+        var bookRepository = unitOfWork.WriteRepository<Book, int>();
+
+        var fixture= new Fixture();
+        
+        var mockedUser = Book.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>(),
+                                     fixture.Create<int>(), 
+                                     fixture.Create<int>());
+
+        await bookRepository.AddAsync(mockedUser);
+        await unitOfWork.CommitAsync();
+
+        // When        
+        var result = await bookRepository.DeactivateAsync(mockedUser);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(ErrorResponse.InvalidOperationDefaultMessage, 
+                     result.Errors[0].ErrorMessage());
+    }
+
+    [Fact(DisplayName = "WRT-11.02: ModifyEntityState - Failure, invalid entity action")]
+    public void ModifyEntityStateMethodTest2()
+    {
+        // Given
+        var mockedProgram = new MockedProgram();
+        var context = mockedProgram.GetContext();
+        var bookRepository = new RepositoryTestMocked<Book, int>(context);
+
+        var fixture= new Fixture();
+        
+        var mockedBook = Book.Create(fixture.Create<string>(), 
+                                     fixture.Create<string>(),
+                                     fixture.Create<int>(), 
+                                     fixture.Create<int>());
+
+        // When        
+        var result = bookRepository.InvalidModifyEntityState(mockedBook);
+
+        // Then
+        Assert.True(result.IsFailure);
+        Assert.Single(result.Errors);
+        Assert.Equal(RepositoryBase<Book, int>
+                    .InvalidEntityState
+                    .Replace(ErrorResponse.ReferenceToVariable, "4"), 
+                     result.Errors[0].ErrorMessage());
     }
 }

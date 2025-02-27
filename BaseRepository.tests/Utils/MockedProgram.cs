@@ -49,4 +49,11 @@ public class MockedProgram
         
         return (mockedUser.Id, mockedBook.Id);
     }
+
+    public (UnitOfWork, ProjectContext) GetContextAndUnitOfWork()
+    {
+        var context = GetContext();
+
+        return (new UnitOfWork(context), context);
+    }
 }

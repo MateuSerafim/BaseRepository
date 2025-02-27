@@ -12,7 +12,9 @@ public class UnitOfWork(DbContext context) : IUnitOfWork, IDisposable
     private readonly DbContext _context = context;
     private bool InvalidState = false;
     private bool Disposed = false;
-    private string InvalidStateMessage = "Request Database State has invalid.";
+
+    public const string DefaultInvalidStateMessage = "Request Database State has invalid.";
+    private string InvalidStateMessage = DefaultInvalidStateMessage;
 
     public IReadRepository<E, EId> ReadOnlyRepository<E, EId>()
     where E : class, IEntity<EId>
@@ -27,7 +29,7 @@ public class UnitOfWork(DbContext context) : IUnitOfWork, IDisposable
     public Result<(int, List<IAction>)> Commit()
     {
         if (InvalidState) 
-            return ErrorResponse.CriticalError();
+            return ErrorResponse.CriticalError(InvalidStateMessage);
         try
         {
             return (_context.SaveChanges(), GetEntitiesActions());

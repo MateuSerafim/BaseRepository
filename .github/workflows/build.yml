@@ -1,0 +1,74 @@
+name: Github Actions - Build and Test
+on:
+  push:
+    branches:
+      - main
+      - releases/*
+    tags:
+      - v*
+
+  pull_request:
+    branches:
+      - releases/*
+
+jobs:
+  job_test:
+    name: "Run unit tests of project"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get repository code
+        uses: actions/checkout@v3
+
+      - name: Configure .NET env
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0'
+      
+      - name: Configure access to github packages
+        run: |
+          echo "GH_USERNAME=${{ secrets.GH_USERNAME }}" >> $GITHUB_ENV
+          echo "GH_TOKEN=${{ secrets.GH_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run tests
+        run: dotnet test --verbosity quiet /p:CollectCoverage=true /p:Threshold=100
+
+  job_publish:
+    name: "Publish package in Github packages"
+    needs: job_test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Get repository code
+        uses: actions/checkout@v3
+
+      - name: Configure .NET env
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0'
+
+      - name: Configure access to github packages
+        run: |
+          echo "GH_USERNAME=${{ secrets.GH_USERNAME }}" >> $GITHUB_ENV
+          echo "GH_TOKEN=${{ secrets.GH_TOKEN }}" >> $GITHUB_ENV
+      
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Get version from Git
+        run: |
+          VERSION=$(git describe --tags --always | cut -c 2-)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+               
+      - name: Build and pack
+        run: dotnet build ./BaseRepository/BaseRepository.csproj --configuration Release --output ./nupkgs
+
+      - name: Publish to GitHub packages
+        run: |
+          dotnet nuget push ./nupkgs/*.nupkg \
+            --source https://nuget.pkg.github.com/MateuSerafim/index.json \
+            --api-key ${{ secrets.NUGET_GIT_ACCESS_TOKEN }}
